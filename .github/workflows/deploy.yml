@@ -33,7 +33,8 @@ jobs:
       - name: Deploy secrets
         run: |
           ssh -i deploy_key -o StrictHostKeyChecking=no $USER@$HOST "
-            cat > ~/ai-archives/.env <<EOF
+            cat > ~/ai-archives/.env <<-EOF
+            NEXT_PUBLIC_BASE_URL=${{ secrets.NEXT_PUBLIC_BASE_URL }}
             DB_HOST=${{ secrets.DB_HOST }}
             DB_PORT=${{ secrets.DB_PORT }}
             DB_NAME=${{ secrets.DB_NAME }}
