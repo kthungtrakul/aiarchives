@@ -19,27 +19,6 @@ interface ConversationCardData {
   related: number;
 }
 
-const dummyConversations: ConversationRecord[] = [
-  {
-    id: "conv-001",
-    model: "ChatGPT",
-    scrapedAt: new Date("2025-09-20T10:00:00Z"),
-    contentKey: "conversations/conv-001.html",
-    createdAt: new Date("2025-09-20T10:05:00Z"),
-    sourceHtmlBytes: 45213,
-    views: 87,
-  },
-  {
-    id: "conv-002",
-    model: "Claude",
-    scrapedAt: new Date("2025-09-21T15:30:00Z"),
-    contentKey: "conversations/conv-002.html",
-    createdAt: new Date("2025-09-21T15:35:00Z"),
-    sourceHtmlBytes: 37120,
-    views: 42,
-  },
-];
-
 /**
  * Fetches conversations from the API
  *
@@ -48,10 +27,7 @@ const dummyConversations: ConversationRecord[] = [
  */
 async function fetchConversations(): Promise<ConversationRecord[]> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-
-    if (!baseUrl) return dummyConversations;
-
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     const response = await fetch(`${baseUrl}/api/conversation?limit=50`, {
       method: 'GET',
       headers: {
