@@ -6,6 +6,7 @@ import { CreateConversationInput } from '@/lib/db/types';
 import { createConversationRecord, getAllConversationRecords } from '@/lib/db/conversations';
 import { randomUUID } from 'crypto';
 import { loadConfig } from '@/lib/config';
+import { createScrapeLog } from '@/lib/db/scrape_metrics';
 
 let isInitialized = false;
 
@@ -72,12 +73,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '`htmlDoc` must be a file field' }, { status: 400 });
     }
 
+    // Generate a unique ID for the conversation
+    const conversationId = randomUUID();
+
+    // Log scrape start in metrics
+    await createScrapeLog(conversationId, `Scrape started, model is ${model}`);
+
     // Parse the conversation from HTML
     const html = await file.text();
     const conversation = await parseHtmlToConversation(html, model);
 
-    // Generate a unique ID for the conversation
-    const conversationId = randomUUID();
+    // Log scrape end in metrics
+    await createScrapeLog(conversationId, `Scrape completed`);
 
     // Store only the conversation content in S3
     const contentKey = await s3Client.storeConversation(conversationId, conversation.content);
