@@ -1,7 +1,7 @@
 -- Create scrape metrics table
 CREATE TABLE IF NOT EXISTS scrape_metrics (
     id SERIAL PRIMARY KEY,
-    conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+    conversation_id UUID NOT NULL,
     timestamp TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     message TEXT DEFAULT NULL
 );
