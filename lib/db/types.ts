@@ -21,11 +21,6 @@ export interface ConversationRecord {
   views: number;
 }
 
-export interface ScrapeLog {
-  conversation: string;
-  message: string;
-}
-
 /**
  * Input type for creating a new conversation record
  */
