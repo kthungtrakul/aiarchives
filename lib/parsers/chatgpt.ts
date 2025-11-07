@@ -41,7 +41,7 @@ export async function parseChatGPT(html: string): Promise<Conversation> {
         if (messages.length >= minMessages) {
           return {
             model: 'ChatGPT',
-            content: ''.concat(...messages),
+            content: messages.join(''),
             scrapedAt: new Date().toISOString(),
             sourceHtmlBytes: html.length,
           };
@@ -61,12 +61,6 @@ export async function parseChatGPT(html: string): Promise<Conversation> {
   };
 }
 
-/**
- * 
- * @param node 
- * @param children 
- * @param param2 
- */
 function scoreCandidate(node: Element, children: Element[],
   { roleKeywords, timestampRegex }: { roleKeywords: string[], timestampRegex: RegExp}) {
     let score = 0;
