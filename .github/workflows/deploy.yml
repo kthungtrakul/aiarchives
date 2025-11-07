@@ -2,7 +2,7 @@ name: Deploy AI Archives to EC2
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature-conversation-scraping]
 
 jobs:
   deploy:

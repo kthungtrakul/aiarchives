@@ -83,6 +83,11 @@ function scoreCandidate(node: Element, children: Element[],
     if (textNodes > 0) avgTextLen = avgTextLen / textNodes;
 
     // Build a score from signals:
+    const className = (node.getAttribute('class') || '').toLowerCase();
+    if (className.includes('conversation') || className.includes('prose') || className.includes('message')) {
+      score += 1.25;
+    }
+
     score += (children.length >= 5) ? 1.5 : (children.length >= 3) ? 1.0 : 0;
     score += (roleHits > 0) ? Math.min(2, roleHits / 2) : 0;
     score += (timestampHits > 0) ? 1.0 : 0;
