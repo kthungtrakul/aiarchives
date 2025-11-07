@@ -70,7 +70,7 @@ function scoreCandidate(node: Element, children: Element[],
     let avgTextLen = 0;
 
     for (const ch of children) {
-      const txt = ch.textContent.trim().toLowerCase();
+      const txt = ch.textContent?.trim().toLowerCase() ?? null;
       if (!txt) continue;
       textNodes++;
       avgTextLen += txt.length;
@@ -103,7 +103,7 @@ function parseMessages(children: Element[],
   { roleKeywords, timestampRegex }: { roleKeywords: string[]; timestampRegex: RegExp}) {
   const out: string[] = [];
   for (const ch of children) {
-    const txt = ch.textContent.trim();
+    const txt = ch.textContent?.trim() ?? null;
     if (!txt) continue;
 
     // naive role detection
