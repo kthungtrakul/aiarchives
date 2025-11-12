@@ -103,15 +103,15 @@ function parseMessages(children: Element[],
   { roleKeywords, timestampRegex }: { roleKeywords: string[]; timestampRegex: RegExp}) {
   const out: string[] = [];
   for (const ch of children) {
-    const txt = ch.textContent?.trim() ?? null;
-    if (!txt) continue;
+    const txt = ch.textContent?.trim() ?? '';
+    if (!shouldParse(ch, txt)) continue;
 
     // naive role detection
     const lower = txt.toLowerCase();
-    let role = "unknown";
+    let role = 'unknown';
     for (const k of roleKeywords) {
       if (lower.includes(k)) {
-        role = k === "assistant" || k.includes("gpt") || k === "bot" ? "assistant" : "user";
+        role = k === 'assistant' || k.includes('gpt') || k === 'bot' ? 'assistant' : 'user';
         break;
       }
     }
@@ -122,7 +122,38 @@ function parseMessages(children: Element[],
 
     // For simplicity, remove name/timestamp lines if they're present as metadata
     // In practice, you'd want more robust HTML parsing for nested .metadata nodes
-    out.push(`${role} ${timestamp}: ${txt}\n\n`);
+    out.push(`${role} ${timestamp ?? ''}: ${txt}\n\n`);
   }
   return out;
+}
+
+function shouldParse(element: Element, text: string): boolean {
+  if (!text) return false;
+  const tagName = element.tagName.toLowerCase();
+  const className = (element.getAttribute('class') || '').toLowerCase();
+
+  // Structural filtering
+  if (/(nav|header|footer|aside)/i.test(tagName)) return false;
+  if (/(sidebar|toolbar|menu|icon|ad|history)/i.test(className)) return false;
+
+  // Content filtering
+  const noisePatterns = [
+    /skip to content/i,
+    /chat history/i,
+    /upgrade/i,
+    /search/i,
+    /library/i,
+    /share/i,
+    /cookie/i,
+    /^\s*$/,
+  ];
+  if (noisePatterns.some(rx => rx.test(text))) return false;
+
+  // Density/length filtering
+  if (text.length < 10 || text.length > 2000) return false;
+
+  // HTML-like content that's not part of text
+  if (/function\s*\(|const\s+|var\s+/.test(text)) return false;
+
+  return true;
 }
