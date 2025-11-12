@@ -150,7 +150,7 @@ function shouldParse(element: Element, text: string): boolean {
   if (noisePatterns.some(rx => rx.test(text))) return false;
 
   // Density/length filtering
-  if (text.length < 10 || text.length > 2000) return false;
+  // if (text.length < 10 || text.length > 2000) return false;
 
   // HTML-like content that's not part of text
   if (/function\s*\(|const\s+|var\s+/.test(text)) return false;
