@@ -49,4 +49,4 @@ jobs:
       - name: Restart AI Archives service
         run: |
           ssh -i deploy_key -o StrictHostKeyChecking=no $USER@$HOST \
-            "pm2 restart ai-archives-stable --update-env"
+            "pm2 restart ai-archives --update-env"
