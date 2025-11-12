@@ -133,7 +133,7 @@ function shouldParse(element: Element, text: string): boolean {
   const className = (element.getAttribute('class') || '').toLowerCase();
 
   // Structural filtering
-  if (/(nav|header|footer|aside)/i.test(tagName)) return false;
+  if (/(nav|header|footer|aside|script|style)/i.test(tagName)) return false;
   if (/(sidebar|toolbar|menu|icon|ad|history)/i.test(className)) return false;
 
   // Content filtering
@@ -145,7 +145,12 @@ function shouldParse(element: Element, text: string): boolean {
     /library/i,
     /share/i,
     /cookie/i,
-    /^\s*$/,
+    /__reactroutercontext/i,
+    /\$RC\(/,
+    /window\./,
+    /const\s+\w+/,
+    /function\s*\(/,
+    /document\.querySelector/i,
   ];
   if (noisePatterns.some(rx => rx.test(text))) return false;
 
@@ -153,7 +158,7 @@ function shouldParse(element: Element, text: string): boolean {
   // if (text.length < 10 || text.length > 2000) return false;
 
   // HTML-like content that's not part of text
-  if (/function\s*\(|const\s+|var\s+/.test(text)) return false;
+  // if (/function\s*\(|const\s+|var\s+/.test(text)) return false;
 
   return true;
 }
