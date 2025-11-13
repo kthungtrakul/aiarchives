@@ -8,7 +8,7 @@ export async function parseChatGPT(html: string): Promise<Conversation> {
   // configuration parameters
   const minMessages = 2;
   const minScore = 3.0;
-  const roleKeywords = ['user', 'assistant', 'bot', 'gpt', 'claude', 'message'];
+  const roleKeywords = ['user', 'assistant', 'bot', 'gpt'];
   const timestampRegex = new RegExp(/\b(20\d{2}[-/]\d{1,2}[-/]\d{1,2}|\d{1,2}:\d{2})\b/);
 
   const dom = new JSDOM(html);
@@ -24,6 +24,21 @@ export async function parseChatGPT(html: string): Promise<Conversation> {
     };
   }
 
+  // Try extracting from <article data-turn> containers first
+  const articles = Array.from(doc.querySelectorAll('article[data-turn]'));
+  const messagesFromArticles = extractFromArticles(articles, roleKeywords, timestampRegex);
+  if (messagesFromArticles.length >= minMessages) {
+    return buildConversation(messagesFromArticles, html);
+  }
+
+  // Then try extracting from <div data-message-author-role> containers
+  const roleNodes = Array.from(doc.querySelectorAll('div[data-message-author-role]'));
+  const messagesFromRoleNodes = extractFromRoleNodes(roleNodes, roleKeywords, timestampRegex);
+  if (messagesFromRoleNodes.length >= minMessages) {
+    return buildConversation(messagesFromRoleNodes, html);
+  }
+
+  // Fallback to existing BFS logic
   const queue: Element[] = [body];
 
   while (queue.length) {
@@ -154,11 +169,76 @@ function shouldParse(element: Element, text: string): boolean {
   ];
   if (noisePatterns.some(rx => rx.test(text))) return false;
 
-  // Density/length filtering
-  // if (text.length < 10 || text.length > 2000) return false;
-
-  // HTML-like content that's not part of text
-  // if (/function\s*\(|const\s+|var\s+/.test(text)) return false;
-
   return true;
+}
+
+function extractFromArticles(articles: Element[], roleKeywords: string[], timestampRegex: RegExp): string[] {
+  const messages: string[] = [];
+  for (const article of articles) {
+    const txt = article.textContent?.trim() ?? '';
+    if (!shouldParse(article, txt)) continue;
+
+    // naive role detection by data-turn attribute or content
+    let role = 'unknown';
+    const turnAttr = article.getAttribute('data-turn')?.toLowerCase();
+    if (turnAttr) {
+      if (turnAttr.includes('user')) role = 'user';
+      else if (turnAttr.includes('assistant') || turnAttr.includes('bot') || turnAttr.includes('gpt')) role = 'assistant';
+    } else {
+      const lower = txt.toLowerCase();
+      for (const k of roleKeywords) {
+        if (lower.includes(k)) {
+          role = k === 'assistant' || k.includes('gpt') || k === 'bot' ? 'assistant' : 'user';
+          break;
+        }
+      }
+    }
+
+    const tsMatch = txt.match(timestampRegex);
+    const timestamp = tsMatch ? tsMatch[0] : null;
+
+    messages.push(`${role} ${timestamp ?? ''}: ${txt}\n\n`);
+  }
+  return messages;
+}
+
+function extractFromRoleNodes(roleNodes: Element[], roleKeywords: string[], timestampRegex: RegExp): string[] {
+  const messages: string[] = [];
+  for (const node of roleNodes) {
+    const txt = node.textContent?.trim() ?? '';
+    if (!shouldParse(node, txt)) continue;
+
+    // role detection from attribute
+    const roleAttr = node.getAttribute('data-message-author-role')?.toLowerCase() ?? '';
+    let role = 'unknown';
+    if (roleAttr.includes('assistant') || roleAttr.includes('bot') || roleAttr.includes('gpt')) {
+      role = 'assistant';
+    } else if (roleAttr.includes('user')) {
+      role = 'user';
+    } else {
+      // fallback to keyword detection
+      const lower = txt.toLowerCase();
+      for (const k of roleKeywords) {
+        if (lower.includes(k)) {
+          role = k === 'assistant' || k.includes('gpt') || k === 'bot' ? 'assistant' : 'user';
+          break;
+        }
+      }
+    }
+
+    const tsMatch = txt.match(timestampRegex);
+    const timestamp = tsMatch ? tsMatch[0] : null;
+
+    messages.push(`${role} ${timestamp ?? ''}: ${txt}\n\n`);
+  }
+  return messages;
+}
+
+function buildConversation(messages: string[], html: string): Conversation {
+  return {
+    model: 'ChatGPT',
+    content: messages.join(''),
+    scrapedAt: new Date().toISOString(),
+    sourceHtmlBytes: html.length,
+  };
 }
